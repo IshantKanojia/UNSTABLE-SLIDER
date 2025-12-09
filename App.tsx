@@ -1,5 +1,7 @@
+
 import React, { useState } from 'react';
 import { SliderGame } from './components/SliderGame';
+import { SisypheanUploadGame } from './components/SisypheanUploadGame';
 import { Button } from './components/Button';
 import { GameState, VICTORY_MESSAGES } from './constants';
 
@@ -15,8 +17,8 @@ const App: React.FC = () => {
     if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
   };
 
-  const resetGame = () => {
-    setGameState(GameState.PLAYING);
+  const resetGame = (game: GameState) => {
+    setGameState(game);
   };
 
   const goToMenu = () => {
@@ -28,31 +30,53 @@ const App: React.FC = () => {
       
       {/* MENU SCREEN */}
       {gameState === GameState.MENU && (
-        <div className="flex flex-col items-center gap-8 p-8 max-w-lg w-full animate-in fade-in zoom-in duration-300">
-          <div className="text-center space-y-2">
-            <h1 className="text-6xl md:text-8xl font-black text-black drop-shadow-[4px_4px_0_rgba(0,0,0,0.2)]">
-              UNSTABLE<br/>SLIDER
+        <div className="flex flex-col items-center gap-8 p-4 md:p-8 max-w-4xl w-full animate-in fade-in zoom-in duration-300 h-full justify-center">
+          <div className="text-center space-y-2 mb-8">
+            <h1 className="text-5xl md:text-8xl font-black text-black drop-shadow-[4px_4px_0_rgba(0,0,0,0.2)]">
+              RAGE ARCADE
             </h1>
             <p className="text-xl font-bold text-red-500 -rotate-2">
-              Warning: May cause rage quitting.
+              Choose your suffering.
             </p>
           </div>
           
-          <div className="p-6 bg-white border-4 border-black shadow-[8px_8px_0_0_#000] rotate-1 w-full text-center">
-            <p className="mb-4 font-mono text-sm">
-              OBJECTIVE: Drag the slider to 100%.<br/>
-              OBSTACLE: The slider hates you.
-            </p>
-            <Button size="lg" onClick={resetGame} className="w-full">
-              START GAME
-            </Button>
+          <div className="flex flex-col md:flex-row gap-6 w-full justify-center items-stretch">
+            
+            {/* GAME 1 CARD */}
+            <div className="flex-1 bg-white border-4 border-black shadow-[8px_8px_0_0_#000] p-6 flex flex-col items-center hover:-translate-y-1 hover:shadow-[12px_12px_0_0_#000] transition-all">
+                <div className="text-4xl mb-4">🎚️</div>
+                <h2 className="text-2xl font-black mb-2 uppercase">Unstable Slider</h2>
+                <p className="text-sm font-mono text-center mb-6 opacity-70 flex-1">
+                    Drag the slider to 100%. It fights back. It lies. It cheats.
+                </p>
+                <Button size="lg" onClick={() => resetGame(GameState.PLAYING_SLIDER)} className="w-full">
+                PLAY
+                </Button>
+            </div>
+
+            {/* GAME 2 CARD */}
+            <div className="flex-1 bg-black border-4 border-green-500 shadow-[8px_8px_0_0_#15803d] p-6 flex flex-col items-center hover:-translate-y-1 hover:shadow-[12px_12px_0_0_#15803d] transition-all text-green-500">
+                <div className="text-4xl mb-4">💾</div>
+                <h2 className="text-2xl font-black mb-2 uppercase tracking-widest">Sisyphean Upload</h2>
+                <p className="text-sm font-mono text-center mb-6 opacity-70 flex-1">
+                    Hold to upload. Manage heat. Endure packet loss. 99.99% is not enough.
+                </p>
+                <Button variant="secondary" size="lg" onClick={() => resetGame(GameState.PLAYING_UPLOAD)} className="w-full !bg-green-600 !border-green-800 !text-black hover:!bg-green-500">
+                UPLOAD
+                </Button>
+            </div>
+
           </div>
         </div>
       )}
 
-      {/* GAME SCREEN */}
-      {gameState === GameState.PLAYING && (
+      {/* GAME SCREENS */}
+      {gameState === GameState.PLAYING_SLIDER && (
         <SliderGame onWin={handleWin} onBack={goToMenu} />
+      )}
+
+      {gameState === GameState.PLAYING_UPLOAD && (
+        <SisypheanUploadGame onBack={goToMenu} />
       )}
 
       {/* WIN SCREEN */}
@@ -69,15 +93,11 @@ const App: React.FC = () => {
           </p>
           
           <div className="flex gap-4 flex-wrap justify-center">
-            <Button variant="primary" size="lg" onClick={resetGame}>
-              Play Again
-            </Button>
-            <Button variant="secondary" size="lg" onClick={goToMenu}>
-              Main Menu
+            <Button variant="primary" size="lg" onClick={goToMenu}>
+              Back to Menu
             </Button>
           </div>
 
-          {/* Confetti simulation (simple CSS particles) */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
              {[...Array(20)].map((_, i) => (
                <div 

@@ -330,10 +330,13 @@ export const SliderGame: React.FC<SliderGameProps> = ({ onWin, onBack }) => {
   }, [isDragging, handleMouseMove]);
 
   return (
-    <div className={`relative w-full max-w-2xl h-full flex flex-col items-center justify-center p-6 ${screenShake ? 'animate-shake' : ''}`}>
+    <div className={`relative w-full h-full flex flex-col items-center justify-center p-6 overflow-hidden ${screenShake ? 'animate-shake' : ''}`}>
       
+      {/* Moving Background Grid */}
+      <div className="bg-warped-grid"></div>
+
       {/* HUD */}
-      <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
+      <div className="absolute top-4 left-4 right-4 flex justify-between items-start z-30">
         <Button variant="secondary" size="sm" onClick={onBack}>
              &larr; Menu
         </Button>
@@ -345,61 +348,69 @@ export const SliderGame: React.FC<SliderGameProps> = ({ onWin, onBack }) => {
         </div>
       </div>
 
-      <h1 className="text-4xl md:text-6xl font-black mb-12 text-center select-none" style={{ color: COLORS.dark }}>
-        DRAG TO <span className="text-red-500 underline decoration-wavy">100%</span>
-      </h1>
+      <div className="relative z-10 flex flex-col items-center w-full max-w-2xl">
+        <h1 className="text-4xl md:text-6xl font-black mb-12 text-center select-none" style={{ color: COLORS.dark }}>
+            DRAG TO <span className="text-red-500 underline decoration-wavy">100%</span>
+        </h1>
 
-      {/* The Slider Container */}
-      <div 
-        ref={sliderRef}
-        className="relative w-full h-16 bg-gray-200 border-4 border-black rounded-full overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] select-none"
-      >
-        {/* Track Pattern */}
-        <div className="absolute inset-0 slider-track pointer-events-none"></div>
-        
-        {/* Progress Bar */}
+        {/* The Slider Container */}
         <div 
-            className="absolute left-0 top-0 bottom-0 bg-red-500 transition-all duration-75 ease-linear border-r-4 border-black"
-            style={{ width: `${value}%` }}
-        ></div>
+            ref={sliderRef}
+            className="relative w-full h-16 bg-gray-200 border-4 border-black rounded-full overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] select-none"
+        >
+            {/* Track Pattern */}
+            <div className="absolute inset-0 slider-track pointer-events-none"></div>
+            
+            {/* Progress Bar */}
+            <div 
+                className="absolute left-0 top-0 bottom-0 bg-red-500 transition-all duration-75 ease-linear border-r-4 border-black"
+                style={{ width: `${value}%` }}
+            ></div>
 
-        {/* Target Line */}
-        <div className="absolute right-0 top-0 bottom-0 w-8 bg-green-400 border-l-4 border-black flex items-center justify-center z-10 pointer-events-none opacity-50">
-            <span className="text-xs font-bold -rotate-90">GOAL</span>
+            {/* Target Line */}
+            <div className="absolute right-0 top-0 bottom-0 w-8 bg-green-400 border-l-4 border-black flex items-center justify-center z-10 pointer-events-none opacity-50">
+                <span className="text-xs font-bold -rotate-90">GOAL</span>
+            </div>
+
+            {/* The Handle */}
+            <div 
+            className={`absolute top-1/2 -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing z-20 transition-all duration-75
+                ${chaosMode === 'invisible' ? 'opacity-0' : 'opacity-100'}
+                ${chaosMode === 'shaking' ? 'animate-shake' : ''}
+            `}
+            style={{ 
+                left: `${value}%`,
+                width: `${handleSize}px`,
+                height: `${handleSize}px`
+            }}
+            onMouseDown={handleMouseDown}
+            onTouchStart={handleMouseDown}
+            >
+            <div className="w-full h-full bg-yellow-400 border-4 border-black rounded-lg flex items-center justify-center shadow-sm relative group">
+                {/* Handle Face */}
+                <div className="flex gap-1 pointer-events-none">
+                    <div className="w-2 h-2 bg-black rounded-full"></div>
+                    <div className="w-2 h-2 bg-black rounded-full"></div>
+                </div>
+                {/* Mouth changes based on chaos */}
+                <div className={`absolute bottom-2 w-4 h-1 bg-black rounded-full transition-all 
+                    ${value > 80 ? 'h-3 rounded-t-none rounded-b-full' : ''}
+                `}></div>
+                
+                {/* Tooltip */}
+                {isDragging && (
+                    <div className="absolute -top-10 bg-black text-white px-2 py-1 text-xs rounded whitespace-nowrap font-mono">
+                        {value.toFixed(1)}%
+                    </div>
+                )}
+            </div>
+            </div>
         </div>
 
-        {/* The Handle */}
-        <div 
-          className={`absolute top-1/2 -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing z-20 transition-all duration-75
-            ${chaosMode === 'invisible' ? 'opacity-0' : 'opacity-100'}
-            ${chaosMode === 'shaking' ? 'animate-shake' : ''}
-          `}
-          style={{ 
-            left: `${value}%`,
-            width: `${handleSize}px`,
-            height: `${handleSize}px`
-          }}
-          onMouseDown={handleMouseDown}
-          onTouchStart={handleMouseDown}
-        >
-          <div className="w-full h-full bg-yellow-400 border-4 border-black rounded-lg flex items-center justify-center shadow-sm relative group">
-            {/* Handle Face */}
-            <div className="flex gap-1 pointer-events-none">
-                <div className="w-2 h-2 bg-black rounded-full"></div>
-                <div className="w-2 h-2 bg-black rounded-full"></div>
-            </div>
-            {/* Mouth changes based on chaos */}
-            <div className={`absolute bottom-2 w-4 h-1 bg-black rounded-full transition-all 
-                ${value > 80 ? 'h-3 rounded-t-none rounded-b-full' : ''}
-            `}></div>
-            
-            {/* Tooltip */}
-            {isDragging && (
-                <div className="absolute -top-10 bg-black text-white px-2 py-1 text-xs rounded whitespace-nowrap font-mono">
-                    {value.toFixed(1)}%
-                </div>
-            )}
-          </div>
+        {/* Helper Text */}
+        <div className="mt-12 text-center opacity-60 font-mono text-sm max-w-md">
+            <p className="mb-2">CAUTION: Slider may exhibit unstable behavior.</p>
+            <p>Do not trust the handle. Do not trust the bar. Trust nothing.</p>
         </div>
       </div>
 
@@ -426,12 +437,6 @@ export const SliderGame: React.FC<SliderGameProps> = ({ onWin, onBack }) => {
             </div>
         );
       })}
-      
-      {/* Helper Text */}
-      <div className="mt-12 text-center opacity-60 font-mono text-sm max-w-md">
-        <p className="mb-2">CAUTION: Slider may exhibit unstable behavior.</p>
-        <p>Do not trust the handle. Do not trust the bar. Trust nothing.</p>
-      </div>
 
     </div>
   );

@@ -1,9 +1,14 @@
 
+
 export class AudioController {
   private ctx: AudioContext | null = null;
   private dragOsc: OscillatorNode | null = null;
   private dragGain: GainNode | null = null;
   
+  // Upload Game specific
+  private uploadOsc: OscillatorNode | null = null;
+  private uploadGain: GainNode | null = null;
+
   // Singleton instance
   static instance = new AudioController();
 
@@ -18,6 +23,8 @@ export class AudioController {
       this.ctx.resume().catch(() => {});
     }
   }
+
+  // --- SLIDER GAME AUDIO ---
 
   playToast(variant: 'normal' | 'warning' | 'danger' | 'glitch') {
     this.init();
@@ -78,7 +85,6 @@ export class AudioController {
     this.init();
     if (!this.ctx) return;
     
-    // Stop existing if any
     if (this.dragOsc) this.stopDrag();
 
     this.dragOsc = this.ctx.createOscillator();
@@ -100,9 +106,8 @@ export class AudioController {
     if (!this.ctx || !this.dragOsc) return;
     
     const t = this.ctx.currentTime;
-    let targetFreq = 220 + (percent * 8); // 220Hz to ~1000Hz
+    let targetFreq = 220 + (percent * 8); 
 
-    // Modulate based on chaos
     if (chaosMode === 'shaking') {
         targetFreq += Math.sin(t * 50) * 50;
     } else if (chaosMode === 'slippery') {
@@ -111,7 +116,6 @@ export class AudioController {
         targetFreq = Math.random() * 1000;
     }
 
-    // Use setTargetAtTime for smooth transition but quick enough
     this.dragOsc.frequency.setTargetAtTime(targetFreq, t, 0.05);
   }
 
@@ -119,7 +123,6 @@ export class AudioController {
     if (!this.ctx || !this.dragGain) return;
     
     const t = this.ctx.currentTime;
-    // Fade out
     this.dragGain.gain.setTargetAtTime(0, t, 0.05);
     
     const osc = this.dragOsc;
@@ -172,5 +175,140 @@ export class AudioController {
       
       osc.start(t);
       osc.stop(t + 0.1);
+  }
+
+  // --- UPLOAD GAME AUDIO ---
+
+  startUploadHum() {
+    this.init();
+    if (!this.ctx) return;
+    if (this.uploadOsc) return; 
+
+    this.uploadOsc = this.ctx.createOscillator();
+    this.uploadGain = this.ctx.createGain();
+
+    this.uploadOsc.type = 'sawtooth'; // Grittier sound for retro feel
+    this.uploadOsc.frequency.setValueAtTime(100, this.ctx.currentTime);
+
+    this.uploadGain.gain.setValueAtTime(0, this.ctx.currentTime);
+    this.uploadGain.gain.linearRampToValueAtTime(0.05, this.ctx.currentTime + 0.1);
+
+    // Lowpass filter to muffle it initially
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 500;
+
+    this.uploadOsc.connect(filter);
+    filter.connect(this.uploadGain);
+    this.uploadGain.connect(this.ctx.destination);
+
+    this.uploadOsc.start();
+  }
+
+  updateUploadHum(percent: number) {
+    if (!this.ctx || !this.uploadOsc) return;
+    const t = this.ctx.currentTime;
+    
+    // Pitch rises dramatically
+    // 0% = 100Hz, 50% = 400Hz, 99% = 2000Hz
+    const freq = 100 + (percent * 10) + (percent > 90 ? (percent - 90) * 100 : 0);
+    this.uploadOsc.frequency.setTargetAtTime(freq, t, 0.1);
+  }
+
+  stopUploadHum() {
+    if (!this.ctx || !this.uploadGain) return;
+    const t = this.ctx.currentTime;
+    
+    this.uploadGain.gain.setTargetAtTime(0, t, 0.05);
+    const osc = this.uploadOsc;
+    const gain = this.uploadGain;
+    
+    this.uploadOsc = null;
+    this.uploadGain = null;
+
+    setTimeout(() => {
+        if (osc) try { osc.stop(); osc.disconnect(); } catch(e){}
+        if (gain) try { gain.disconnect(); } catch(e){}
+    }, 100);
+  }
+
+  playError() {
+    // Windows XP Error style
+    this.init();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(150, t);
+    
+    gain.gain.setValueAtTime(0.1, t);
+    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+    
+    osc.start(t);
+    osc.stop(t + 0.3);
+  }
+
+  playShatter() {
+    this.init();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    
+    // White noise buffer
+    const bufferSize = this.ctx.sampleRate * 0.5; // 0.5 seconds
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    
+    for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+    }
+    
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = buffer;
+    
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0.2, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+    
+    noise.connect(gain);
+    gain.connect(this.ctx.destination);
+    noise.start(t);
+  }
+
+  playTauntScare() {
+    this.init();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+
+    // A loud, discordant buzzy sound
+    const osc1 = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc1.type = 'sawtooth';
+    osc2.type = 'square';
+
+    osc1.frequency.setValueAtTime(100, t);
+    osc1.frequency.linearRampToValueAtTime(50, t + 0.2);
+
+    osc2.frequency.setValueAtTime(105, t); // Slight detune for dissonance
+    osc2.frequency.linearRampToValueAtTime(55, t + 0.2);
+
+    gain.gain.setValueAtTime(0.3, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+
+    osc1.start(t);
+    osc2.start(t);
+    osc1.stop(t + 0.5);
+    osc2.stop(t + 0.5);
   }
 }
