@@ -9,6 +9,10 @@ export class AudioController {
   private uploadOsc: OscillatorNode | null = null;
   private uploadGain: GainNode | null = null;
 
+  // Zen Game specific
+  private windOsc: OscillatorNode | null = null;
+  private windGain: GainNode | null = null;
+
   // Singleton instance
   static instance = new AudioController();
 
@@ -311,4 +315,92 @@ export class AudioController {
     osc1.stop(t + 0.5);
     osc2.stop(t + 0.5);
   }
+
+  // --- ZEN GAME AUDIO ---
+
+  playThud() {
+    this.init();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    
+    // Low frequency thud
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(100, t);
+    osc.frequency.exponentialRampToValueAtTime(40, t + 0.1);
+    
+    gain.gain.setValueAtTime(0.3, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+    
+    osc.start(t);
+    osc.stop(t + 0.15);
+  }
+
+  playWindGust() {
+    this.init();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    
+    // Pink noise buffer for wind
+    const bufferSize = this.ctx.sampleRate * 2.0; 
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    
+    for (let i = 0; i < bufferSize; i++) {
+        const white = Math.random() * 2 - 1;
+        data[i] = (lastOut + (0.02 * white)) / 1.02; // Simple pinking filter
+        lastOut = data[i];
+        data[i] *= 3.5; 
+    }
+    
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = buffer;
+    
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(200, t);
+    filter.frequency.linearRampToValueAtTime(600, t + 1);
+    filter.frequency.linearRampToValueAtTime(200, t + 2);
+
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.1, t + 1);
+    gain.gain.linearRampToValueAtTime(0, t + 2);
+
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.ctx.destination);
+    
+    noise.start(t);
+  }
+
+  playSoftClick() {
+    this.init();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(800, t);
+    osc.frequency.exponentialRampToValueAtTime(400, t + 0.1);
+    
+    gain.gain.setValueAtTime(0.05, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+    
+    osc.start(t);
+    osc.stop(t + 0.1);
+  }
 }
+
+// Helper for pink noise state
+let lastOut = 0;

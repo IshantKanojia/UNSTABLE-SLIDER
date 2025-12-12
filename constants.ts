@@ -91,6 +91,60 @@ export const UPLOAD_TAUNTS = [
   "Weak signal (in your brain)",
 ];
 
+export const EARLY_FAILURE_TAUNTS = [
+  "That was pathetic.",
+  "Less than 3? Delete the app.",
+  "My goldfish has better aim.",
+  "Are your hands broken?",
+  "Why even bother?",
+  "A flat line is not a tower.",
+  "You tripped at the starting line.",
+  "Failure is an option, apparently.",
+  "Do you need a tutorial for gravity?",
+  "Just sad.",
+  "Even the ground is disappointed.",
+  "Try opening your eyes next time.",
+  "ERROR: User skill not found."
+];
+
+export const ZEN_MESSAGES = [
+  "Breathe. Try again.",
+  "Maybe less force next time.",
+  "Gravity is not your friend.",
+  "Patience is a virtue you lack.",
+  "A tower built on sand...",
+  "Let it go.",
+  "Perfection is an illusion.",
+  "Chaos is the only constant.",
+  "Was that intentional?",
+  "Physics doesn't care about your feelings.",
+  "Just relax. You're failing anyway.",
+  "Balance is a lie.",
+  "The wind whispers 'loser'.",
+  "Not very Zen of you.",
+  "Your tower is as unstable as your life.",
+  "Gravity 1, You 0.",
+  "I've seen better stacking from a toddler.",
+  "Perhaps you should try breathing harder?",
+  "Balance is clearly not your forte.",
+  "A stiff breeze could have done better.",
+  "That was embarrassing to watch.",
+  "Are you trembling? I sense trembling.",
+  "Physics isn't hard, but apparently it is for you.",
+  "Your ancestors are weeping at this attempt.",
+  "Maybe stick to stacking paper?",
+  "Utter collapse. Just like your hopes.",
+  "Namaste? More like Na-mess-stay.",
+  "Inner peace not found. Only rubble.",
+  "Zen master says: You suck.",
+  "The universe rejects your tower.",
+  "Meditate on your failure.",
+  "A spectacular display of incompetence.",
+  "You bring shame to the monastery.",
+  "Is this your first time using hands?",
+  "Even a rock sits still better than this."
+];
+
 export const COLORS = {
   primary: '#FF6B6B', // Redish
   secondary: '#4ECDC4', // Teal
@@ -103,5 +157,6 @@ export enum GameState {
   MENU = 'MENU',
   PLAYING_SLIDER = 'PLAYING_SLIDER',
   PLAYING_UPLOAD = 'PLAYING_UPLOAD',
+  PLAYING_ZEN = 'PLAYING_ZEN',
   WON = 'WON',
 }
