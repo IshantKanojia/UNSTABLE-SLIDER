@@ -1,5 +1,3 @@
-
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { UPLOAD_TAUNTS } from '../constants';
 import { AudioController } from '../utils/audio';
@@ -301,6 +299,15 @@ export const SisypheanUploadGame: React.FC<SisypheanUploadGameProps> = ({ onBack
             {/* Button shine */}
             <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.2),transparent_50%)] pointer-events-none"></div>
         </button>
+      </div>
+
+      {/* Stupid Caution - Fixed position and color */}
+      <div className="absolute bottom-4 left-0 w-full flex justify-center z-20">
+        <div className="text-green-600/60 text-[10px] md:text-xs font-mono text-center max-w-md border border-green-900/30 p-2 bg-black/50 backdrop-blur-sm">
+            <div>⚠ WARNING: SERVER RUNNING ON POTATO ⚠</div>
+            <div className="mt-1">Connection speeds vary based on your emotional stability.</div>
+            <div>Do not blink. The server smells fear.</div>
+        </div>
       </div>
 
       {/* Fake Win Popup */}

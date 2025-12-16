@@ -1,5 +1,3 @@
-
-
 export const TROLL_MESSAGES = [
   "Oops!",
   "Too shaky!",
@@ -158,5 +156,6 @@ export enum GameState {
   PLAYING_SLIDER = 'PLAYING_SLIDER',
   PLAYING_UPLOAD = 'PLAYING_UPLOAD',
   PLAYING_ZEN = 'PLAYING_ZEN',
+  PLAYING_STAR = 'PLAYING_STAR',
   WON = 'WON',
 }

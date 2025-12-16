@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { TROLL_MESSAGES, INTENSE_MESSAGES, COLORS } from '../constants';
 import { ChaosMode, Toast, ToastVariant } from '../types';
@@ -8,9 +7,10 @@ import { AudioController } from '../utils/audio';
 interface SliderGameProps {
   onWin: () => void;
   onBack: () => void;
+  isDarkMode?: boolean;
 }
 
-export const SliderGame: React.FC<SliderGameProps> = ({ onWin, onBack }) => {
+export const SliderGame: React.FC<SliderGameProps> = ({ onWin, onBack, isDarkMode = false }) => {
   const [value, setValue] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [chaosMode, setChaosMode] = useState<ChaosMode>('normal');
@@ -330,7 +330,7 @@ export const SliderGame: React.FC<SliderGameProps> = ({ onWin, onBack }) => {
   }, [isDragging, handleMouseMove]);
 
   return (
-    <div className={`relative w-full h-full flex flex-col items-center justify-center p-6 overflow-hidden ${screenShake ? 'animate-shake' : ''}`}>
+    <div className={`relative w-full h-full flex flex-col items-center justify-center p-6 overflow-hidden ${screenShake ? 'animate-shake' : ''} bg-yellow-50 dark:bg-zinc-900 transition-colors duration-300`}>
       
       {/* Moving Background Grid */}
       <div className="bg-warped-grid"></div>
@@ -341,35 +341,35 @@ export const SliderGame: React.FC<SliderGameProps> = ({ onWin, onBack }) => {
              &larr; Menu
         </Button>
         <div className="text-right">
-             <div className="font-mono text-xs opacity-50">STABILITY</div>
-             <div className={`font-bold text-xl ${chaosMode === 'normal' ? 'text-green-600' : 'text-red-600 animate-pulse'}`}>
+             <div className="font-mono text-xs opacity-50 dark:text-gray-400">STABILITY</div>
+             <div className={`font-bold text-xl ${chaosMode === 'normal' ? 'text-green-600 dark:text-green-400' : 'text-red-600 animate-pulse'}`}>
                 {chaosMode === 'normal' ? 'STABLE' : 'UNSTABLE'}
              </div>
         </div>
       </div>
 
       <div className="relative z-10 flex flex-col items-center w-full max-w-2xl">
-        <h1 className="text-4xl md:text-6xl font-black mb-12 text-center select-none" style={{ color: COLORS.dark }}>
+        <h1 className="text-4xl md:text-6xl font-black mb-12 text-center select-none dark:text-gray-100" style={{ color: isDarkMode ? undefined : COLORS.dark }}>
             DRAG TO <span className="text-red-500 underline decoration-wavy">100%</span>
         </h1>
 
         {/* The Slider Container */}
         <div 
             ref={sliderRef}
-            className="relative w-full h-16 bg-gray-200 border-4 border-black rounded-full overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] select-none"
+            className="relative w-full h-16 bg-gray-200 dark:bg-zinc-800 border-4 border-black dark:border-gray-500 rounded-full overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.2)] select-none"
         >
             {/* Track Pattern */}
             <div className="absolute inset-0 slider-track pointer-events-none"></div>
             
             {/* Progress Bar */}
             <div 
-                className="absolute left-0 top-0 bottom-0 bg-red-500 transition-all duration-75 ease-linear border-r-4 border-black"
+                className="absolute left-0 top-0 bottom-0 bg-red-500 transition-all duration-75 ease-linear border-r-4 border-black dark:border-gray-500"
                 style={{ width: `${value}%` }}
             ></div>
 
             {/* Target Line */}
-            <div className="absolute right-0 top-0 bottom-0 w-8 bg-green-400 border-l-4 border-black flex items-center justify-center z-10 pointer-events-none opacity-50">
-                <span className="text-xs font-bold -rotate-90">GOAL</span>
+            <div className="absolute right-0 top-0 bottom-0 w-8 bg-green-400 border-l-4 border-black dark:border-gray-500 flex items-center justify-center z-10 pointer-events-none opacity-50">
+                <span className="text-xs font-bold -rotate-90 text-black">GOAL</span>
             </div>
 
             {/* The Handle */}
@@ -408,9 +408,11 @@ export const SliderGame: React.FC<SliderGameProps> = ({ onWin, onBack }) => {
         </div>
 
         {/* Helper Text */}
-        <div className="mt-12 text-center opacity-60 font-mono text-sm max-w-md">
-            <p className="mb-2">CAUTION: Slider may exhibit unstable behavior.</p>
-            <p>Do not trust the handle. Do not trust the bar. Trust nothing.</p>
+        <div className="mt-12 text-center opacity-70 font-mono text-xs md:text-sm max-w-md text-red-900/50 dark:text-red-300/50 select-none">
+            <p className="font-bold border-b-2 border-red-900/20 dark:border-red-300/20 pb-1 mb-2 inline-block">⚠ SAFETY WARNING ⚠</p>
+            <p>Side effects may include broken mice, trust issues,</p>
+            <p>uncontrollable sobbing, and an irrational fear of 99%.</p>
+            <p className="mt-2 text-[10px] uppercase">Do not operate heavy machinery after playing.</p>
         </div>
       </div>
 

@@ -8,9 +8,10 @@ declare const Matter: any;
 
 interface ZenTowerGameProps {
   onBack: () => void;
+  isDarkMode?: boolean;
 }
 
-export const ZenTowerGame: React.FC<ZenTowerGameProps> = ({ onBack }) => {
+export const ZenTowerGame: React.FC<ZenTowerGameProps> = ({ onBack, isDarkMode = false }) => {
   const sceneRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<any>(null);
   const renderRef = useRef<any>(null);
@@ -21,6 +22,7 @@ export const ZenTowerGame: React.FC<ZenTowerGameProps> = ({ onBack }) => {
   const [bestScore, setBestScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [message, setMessage] = useState("");
+  const [flash, setFlash] = useState(false);
   const [isWindy, setIsWindy] = useState(false);
   const [isIntro, setIsIntro] = useState(true);
 
@@ -38,6 +40,26 @@ export const ZenTowerGame: React.FC<ZenTowerGameProps> = ({ onBack }) => {
   
   // Colors (Pastel)
   const PALETTE = ['#FFD1DC', '#E0F4FC', '#D4F0F0', '#FCF4D9', '#E6E6FA'];
+  // Dark Mode Palette (Neon/Muted)
+  const PALETTE_DARK = ['#9d4edd', '#48cae4', '#4ad66d', '#f4d35e', '#ff9e00'];
+
+  // Handle Dark Mode Updates for Canvas
+  useEffect(() => {
+    if (!renderRef.current) return;
+    
+    // Transparent background, let CSS handle it
+    renderRef.current.options.background = 'transparent';
+    
+    // Update ground color
+    const Composite = Matter.Composite;
+    const bodies = Composite.allBodies(engineRef.current.world);
+    const ground = bodies.find((b: any) => b.label === 'ground');
+    if (ground) {
+        ground.render.fillStyle = isDarkMode ? '#52525b' : '#A0AEC0'; // zinc-600 vs gray-400
+    }
+
+    // Update existing blocks if needed (optional, maybe keep them colorful)
+  }, [isDarkMode]);
 
   // Initialize Physics Engine
   useEffect(() => {
@@ -83,7 +105,11 @@ export const ZenTowerGame: React.FC<ZenTowerGameProps> = ({ onBack }) => {
         height - 20, 
         300, // Width reduced to 300 to act as a pedestal
         60, 
-        { isStatic: true, render: { fillStyle: '#A0AEC0' } }
+        { 
+            isStatic: true, 
+            label: 'ground',
+            render: { fillStyle: isDarkMode ? '#52525b' : '#A0AEC0' } 
+        }
     );
     
     Composite.add(engine.world, [ground]);
@@ -213,7 +239,11 @@ export const ZenTowerGame: React.FC<ZenTowerGameProps> = ({ onBack }) => {
     const Composite = Matter.Composite;
     const width = sceneRef.current.clientWidth || window.innerWidth;
     
-    const color = PALETTE[stackHeightRef.current % PALETTE.length];
+    // Choose palette based on current mode, but this only applies to NEW blocks
+    // To make it fully reactive we'd need to iterate bodies, but this is fine.
+    // Actually, let's use a ref for darkMode so the spawn function sees current state
+    const currentPalette = isDarkMode ? PALETTE_DARK : PALETTE;
+    const color = currentPalette[stackHeightRef.current % currentPalette.length];
     
     // Intro blocks spawn lower (stacking visually), player blocks spawn at fixed top height
     const spawnY = isIntroSpawn ? 100 : 100; 
@@ -221,7 +251,11 @@ export const ZenTowerGame: React.FC<ZenTowerGameProps> = ({ onBack }) => {
     // Spawn at center
     const block = Bodies.rectangle(width / 2, spawnY, BLOCK_WIDTH, BLOCK_HEIGHT, {
         isStatic: true, 
-        render: { fillStyle: color, strokeStyle: '#888', lineWidth: 1 },
+        render: { 
+            fillStyle: color, 
+            strokeStyle: isDarkMode ? '#222' : '#888', 
+            lineWidth: 1 
+        },
         friction: 1.0, 
         restitution: 0.0,
         density: 0.002 // Slightly heavier feel
@@ -304,7 +338,7 @@ export const ZenTowerGame: React.FC<ZenTowerGameProps> = ({ onBack }) => {
         if (gameActiveRef.current) spawnBlock(false);
     }, 1000);
 
-  }, [gameOver]);
+  }, [gameOver, isDarkMode]); // Add isDarkMode dependency for color
 
   const startWindCycle = () => {
     if (windIntervalRef.current) clearTimeout(windIntervalRef.current);
@@ -340,7 +374,10 @@ export const ZenTowerGame: React.FC<ZenTowerGameProps> = ({ onBack }) => {
     if (!gameActiveRef.current) return;
     gameActiveRef.current = false;
     setGameOver(true);
+    setFlash(true); // Trigger flash
     
+    setTimeout(() => setFlash(false), 200);
+
     // Use ref to get current score inside the closure
     const currentScore = stackHeightRef.current;
 
@@ -389,12 +426,31 @@ export const ZenTowerGame: React.FC<ZenTowerGameProps> = ({ onBack }) => {
 
   return (
     <div 
-        className="w-full h-full relative bg-purple-50 flex flex-col items-center overflow-hidden touch-none"
+        className="w-full h-full relative bg-purple-50 dark:bg-zinc-900 flex flex-col items-center overflow-hidden touch-none transition-colors duration-300"
         onMouseDown={handleInput}
         onTouchStart={handleInput}
     >
-        {/* Ambient Overlay */}
-        <div className="absolute inset-0 pointer-events-none opacity-50 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(255,255,255,0.8)_100%)]"></div>
+        {/* Dynamic Background */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            {/* Ambient Gradient Base */}
+            <div className="absolute inset-0 bg-gradient-to-b from-purple-100/50 to-blue-50/50 dark:from-indigo-950/80 dark:to-purple-950/80 transition-colors duration-1000"></div>
+            
+            {/* Floating Blobs */}
+            <div className={`absolute top-[10%] left-[10%] w-64 h-64 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-float-blob
+                ${isDarkMode ? 'bg-indigo-600' : 'bg-purple-200'}`} 
+                style={{ animationDelay: '0s' }}></div>
+            
+            <div className={`absolute top-[60%] right-[10%] w-80 h-80 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-float-blob
+                ${isDarkMode ? 'bg-purple-700' : 'bg-pink-200'}`} 
+                style={{ animationDelay: '2s' }}></div>
+            
+            <div className={`absolute bottom-[10%] left-[30%] w-72 h-72 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-float-blob
+                ${isDarkMode ? 'bg-blue-800' : 'bg-blue-200'}`} 
+                style={{ animationDelay: '4s' }}></div>
+        </div>
+
+        {/* Ambient Overlay (keeping the radial one for depth) */}
+        <div className="absolute inset-0 pointer-events-none opacity-50 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(255,255,255,0.8)_100%)] dark:bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.8)_100%)]"></div>
 
         {/* HUD */}
         <div className="absolute top-4 left-4 z-20 flex gap-4">
@@ -402,22 +458,22 @@ export const ZenTowerGame: React.FC<ZenTowerGameProps> = ({ onBack }) => {
                 variant="secondary" 
                 size="sm" 
                 onClick={(e) => { e.stopPropagation(); onBack(); }}
-                className="!bg-white !text-purple-900 !border-purple-200 hover:!bg-purple-100"
+                className="!bg-white !text-purple-900 !border-purple-200 hover:!bg-purple-100 dark:!bg-zinc-800 dark:!text-purple-300 dark:!border-zinc-600"
             >
                 Back
             </Button>
         </div>
 
         <div className="absolute top-8 text-center z-10 pointer-events-none select-none transition-opacity duration-500" style={{ opacity: isIntro ? 0.5 : 1 }}>
-            <h1 className="text-4xl font-['Quicksand'] font-light text-purple-900 mb-2">Zen Tower</h1>
-            <p className="text-purple-400 text-sm">
+            <h1 className="text-4xl font-['Quicksand'] font-light text-purple-900 dark:text-purple-300 mb-2">Zen Tower</h1>
+            <p className="text-purple-400 text-sm dark:text-purple-500">
                 {isIntro ? "Building foundation..." : "Tap to drop. Breathe."}
             </p>
         </div>
 
         <div className="absolute top-8 right-8 text-right z-10 pointer-events-none font-['Quicksand']">
-            <div className="text-4xl text-purple-600">{score}</div>
-            <div className="text-xs text-purple-400">Best: {bestScore}</div>
+            <div className="text-4xl text-purple-600 dark:text-purple-400">{score}</div>
+            <div className="text-xs text-purple-400 dark:text-purple-600">Best: {bestScore}</div>
         </div>
 
         {/* Wind Indicator */}
@@ -428,18 +484,23 @@ export const ZenTowerGame: React.FC<ZenTowerGameProps> = ({ onBack }) => {
         {/* Physics Canvas Container */}
         <div ref={sceneRef} className="w-full h-full absolute inset-0 z-0" />
 
+        {/* Flash Overlay */}
+        {flash && (
+            <div className="absolute inset-0 bg-white z-50 pointer-events-none animate-flash"></div>
+        )}
+
         {/* Game Over Overlay */}
         {gameOver && (
-            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-white/60 backdrop-blur-sm animate-in fade-in">
-                <h2 className="text-3xl text-slate-600 font-light mb-4 text-center px-4 leading-relaxed">
+            <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/90 backdrop-blur-md">
+                <h2 className="animate-pop text-4xl md:text-5xl text-red-500 font-serif italic font-black mb-8 text-center px-4 leading-tight drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">
                     {message}
                 </h2>
-                <div className="text-purple-500 mb-8 font-mono">
+                <div className="text-white/80 mb-8 font-mono text-xl animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
                     Height: {score} | Best: {bestScore}
                 </div>
                 <Button 
                     onClick={(e) => { e.stopPropagation(); resetGame(); }}
-                    className="!bg-purple-300 !text-white !border-transparent hover:!bg-purple-400 shadow-lg"
+                    className="!bg-white !text-black !border-transparent hover:!bg-gray-200 shadow-xl animate-in fade-in zoom-in duration-300 delay-200 font-bold"
                 >
                     Try Again
                 </Button>
@@ -452,6 +513,13 @@ export const ZenTowerGame: React.FC<ZenTowerGameProps> = ({ onBack }) => {
                 (Click or Tap to Release)
              </div>
         )}
+
+        {/* Stupid Caution - Improved Visibility */}
+        <div className="absolute bottom-2 left-0 w-full text-center pointer-events-none z-20 px-4">
+            <p className="text-purple-900/60 dark:text-purple-300/60 text-[10px] md:text-xs font-mono uppercase tracking-widest bg-white/20 dark:bg-black/20 backdrop-blur-[2px] inline-block px-2 rounded">
+                ⚠ CAUTION: Gravity is a paid actor. The wind is personal. Your stack is ugly.
+            </p>
+        </div>
     </div>
   );
 };

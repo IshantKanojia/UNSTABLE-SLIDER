@@ -1,5 +1,3 @@
-
-
 export class AudioController {
   private ctx: AudioContext | null = null;
   private dragOsc: OscillatorNode | null = null;
@@ -399,6 +397,81 @@ export class AudioController {
     
     osc.start(t);
     osc.stop(t + 0.1);
+  }
+
+  // --- STAR DROP GAME AUDIO ---
+
+  playGlassClink() {
+    this.init();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    
+    // High pitched sine
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(2000, t);
+    osc.frequency.exponentialRampToValueAtTime(2200, t + 0.05);
+    
+    gain.gain.setValueAtTime(0.08, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+    
+    osc.start(t);
+    osc.stop(t + 0.1);
+  }
+
+  playStarSuccess() {
+    this.init();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    
+    // Magical twinkling
+    [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+        const osc = this.ctx!.createOscillator();
+        const gain = this.ctx!.createGain();
+        
+        osc.connect(gain);
+        gain.connect(this.ctx!.destination);
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, t + i * 0.1);
+        
+        gain.gain.setValueAtTime(0.05, t + i * 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.1 + 1);
+        
+        osc.start(t + i * 0.1);
+        osc.stop(t + i * 0.1 + 1);
+    });
+  }
+
+  playGentleFail() {
+    this.init();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    
+    // Soft disappointment (Minor chord fade)
+    const freqs = [329.63, 392.00, 493.88]; // E minor-ish
+    freqs.forEach((freq, i) => {
+        const osc = this.ctx!.createOscillator();
+        const gain = this.ctx!.createGain();
+        
+        osc.connect(gain);
+        gain.connect(this.ctx!.destination);
+        
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, t);
+        osc.frequency.linearRampToValueAtTime(freq - 10, t + 1); // Slight detune down
+        
+        gain.gain.setValueAtTime(0.05, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 1.5);
+        
+        osc.start(t);
+        osc.stop(t + 1.5);
+    });
   }
 }
 
