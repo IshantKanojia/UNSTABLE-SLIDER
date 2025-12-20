@@ -1,10 +1,70 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { SliderGame } from './components/SliderGame';
 import { SisypheanUploadGame } from './components/SisypheanUploadGame';
 import { ZenTowerGame } from './components/ZenTowerGame';
 import { StarDropGame } from './components/StarDropGame';
 import { Button } from './components/Button';
 import { GameState, VICTORY_MESSAGES } from './constants';
+
+const GLYPHS = "ABCDEFGHIJKLMOPQRSTUVWXYZ!@#$%^&*()_+1234567890";
+
+const ShuffleText: React.FC<{ text: string }> = ({ text }) => {
+  const [displayText, setDisplayText] = useState(text);
+  const intervalRef = useRef<number | null>(null);
+  const isShufflingRef = useRef(false);
+
+  const triggerShuffle = useCallback(() => {
+    if (isShufflingRef.current) return;
+    isShufflingRef.current = true;
+    
+    let iteration = 0;
+    const originalText = text;
+    
+    if (intervalRef.current) clearInterval(intervalRef.current);
+
+    intervalRef.current = window.setInterval(() => {
+      setDisplayText(
+        originalText
+          .split("")
+          .map((char, index) => {
+            if (index < iteration) {
+              return originalText[index];
+            }
+            if (char === " ") return " ";
+            return GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+          })
+          .join("")
+      );
+
+      iteration += 1 / 3;
+
+      if (iteration >= originalText.length) {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        setDisplayText(originalText);
+        isShufflingRef.current = false;
+      }
+    }, 30);
+  }, [text]);
+
+  useEffect(() => {
+    const timer = setInterval(triggerShuffle, 6000);
+    triggerShuffle(); // Initial trigger
+
+    return () => {
+      clearInterval(timer);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [triggerShuffle]);
+
+  return (
+    <span 
+      onMouseEnter={triggerShuffle} 
+      className="cursor-default inline-block hover:scale-105 transition-transform"
+    >
+      {displayText}
+    </span>
+  );
+};
 
 const App: React.FC = () => {
   const [gameState, setGameState] = useState<GameState>(GameState.MENU);
@@ -57,8 +117,8 @@ const App: React.FC = () => {
       {gameState === GameState.MENU && (
         <div className="flex flex-col items-center gap-8 p-4 md:p-8 max-w-6xl w-full animate-in fade-in zoom-in duration-300 h-full justify-center">
           <div className="text-center space-y-2 mb-4 md:mb-8 shrink-0">
-            <h1 className="text-4xl md:text-8xl font-black text-black dark:text-white drop-shadow-[4px_4px_0_rgba(0,0,0,0.2)] dark:drop-shadow-[4px_4px_0_rgba(255,255,255,0.2)]">
-              RAGE ARCADE
+            <h1 className="text-4xl md:text-8xl font-black text-black dark:text-white drop-shadow-[4px_4px_0_rgba(0,0,0,0.2)] dark:drop-shadow-[4px_4px_0_rgba(255,255,255,0.2)] min-h-[1.2em] font-mono">
+              <ShuffleText text="RAGE ARCADE" />
             </h1>
             <p className="text-xl font-bold text-red-500 -rotate-2">
               Choose your suffering.
@@ -124,6 +184,7 @@ const App: React.FC = () => {
         <SliderGame onWin={handleWin} onBack={goToMenu} isDarkMode={isDarkMode} />
       )}
 
+      {/* GAME SCREENS */}
       {gameState === GameState.PLAYING_UPLOAD && (
         <SisypheanUploadGame onBack={goToMenu} />
       )}
